@@ -59,7 +59,7 @@ function UpdateProfile({ fetchAgain, setFetchAgain, setModalActive, handleDelete
             if (!data.status) {
                 throw new Error(data.msg);
             }
-            setUser({ ...data.updatedUser, avatarColor: user.avatarColor }); // Keep the existing color
+            setUser({ ...data.updatedUser, avatarColor: user.avatarColor });
             handleLocalStorage(data);
             setFetchAgain(!fetchAgain);
             toast.success("Your username was changed successfully", toastOptions);
@@ -108,10 +108,20 @@ function UpdateProfile({ fetchAgain, setFetchAgain, setModalActive, handleDelete
     };
 
     const handlePassword = async () => {
-        if (!newPassword || newPassword !== newPasswordConfirm) {
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*_+])[A-Za-z\d!@#$%^&*_+]{5,20}$/;
+        if (!passwordRegex.test(newPassword)) {
+            toast.error(
+                "Password must be 5-20 characters long, include uppercase, lowercase, a number, and a special character",
+                toastOptions
+            );
+            return;
+        }
+
+        if (newPassword !== newPasswordConfirm) {
             toast.error("Passwords do not match.", toastOptions);
             return;
         }
+
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
             const { data } = await axios.put(passwordUpdateRoute, { userId: user._id, oldPassword, newPassword }, config);
@@ -145,7 +155,7 @@ function UpdateProfile({ fetchAgain, setFetchAgain, setModalActive, handleDelete
                                     <div
                                         className="profile-initial"
                                         style={{
-                                            backgroundColor: user.avatarColor || "#007bff", // Use stored color, or default
+                                            backgroundColor: user.avatarColor || "#007bff",
                                             display: "flex",
                                             alignItems: "center",
                                             justifyContent: "center",

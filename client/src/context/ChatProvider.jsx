@@ -8,7 +8,6 @@ const ChatProvider = ({ children }) => {
   const [user, setUser] = useState();
   const [notification, setNotification] = useState([]);
   const [chats, setChats] = useState();
-  const [chts, setChts] = useState();
 
   const navigate = useNavigate();
 
@@ -16,9 +15,21 @@ const ChatProvider = ({ children }) => {
     const userInfo = JSON.parse(localStorage.getItem(process.env.REACT_APP_LOCALHOST_KEY));
     setUser(userInfo);
 
-    if (!userInfo) navigate("/auth");
+    if (userInfo) {
+      setUser(userInfo);
+    } else {
+      setUser(null);
+      setChats([]);
+      navigate("/auth"); // Redirect to auth page if no user data
+    }
   }, [navigate]);
 
+  // Reset function to clear all chat state
+  const resetState = () => {
+    setSelectedChat(null);
+    setNotification([]);
+    setChats([]);
+  };
 
   return (
     <ChatContext.Provider
@@ -31,8 +42,7 @@ const ChatProvider = ({ children }) => {
         setNotification,
         chats,
         setChats,
-        chts, 
-        setChts,
+        resetState,
       }}
     >
       {children}

@@ -38,36 +38,28 @@ function Register({ isLoginActive }) {
 
   const handleValidation = () => {
     const { password, confirmPassword, username, email } = values;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*_+]).{5,20}$/;
+  
     if (password !== confirmPassword) {
-      //throwing an error
+      toast.error("Password and confirm password should be the same.", toastOptions);
+      return false;
+    } else if (username.length < 3) {
+      toast.error("Username should be greater than 3 characters.", toastOptions);
+      return false;
+    } else if (!passwordRegex.test(password)) {
       toast.error(
-        "Password and confirm password should be same.",
+        "Password must be 5-20 characters long, with one uppercase letter, one lowercase letter, one digit, and one special character (!@#$%^&*_+).",
         toastOptions
       );
       return false;
-    } //if username is shorter than 3 characters
-    else if (username.length < 3) {
-      toast.error(
-        "Username should be greater than 3 characters.",
-        toastOptions
-      );
-      return false;
-    } //if password is shorter than 6 characters
-    else if (password.length < 6) {
-      toast.error(
-        "Password should be greater than 6 characters.",
-        toastOptions
-      );
-      return false;
-    } //if email field is empty
-    else if (email === "") {
+    } else if (email === "") {
       toast.error("Email is required.", toastOptions);
       return false;
     }
     return true;
   };
+  
 
-  //the function which will call 
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (handleValidation()) {
@@ -79,23 +71,25 @@ function Register({ isLoginActive }) {
         formData.append("password", password);
         if (profilePic) {
           formData.append("profilePic", profilePic, profilePic.name);
-        };
+        }
         const { data } = await axios.post(registerRoute, formData);
         if (data.status === false) {
           toast.error(data.msg, toastOptions);
         }
         if (data.status === true) {
-          localStorage.setItem(
-            process.env.REACT_APP_LOCALHOST_KEY,
-            JSON.stringify(data.user)
-          );
-          navigate("/");
+          // Clear any existing localStorage data
+          localStorage.removeItem(process.env.REACT_APP_LOCALHOST_KEY);
+          
+          // Store new user data and navigate to chat
+          localStorage.setItem(process.env.REACT_APP_LOCALHOST_KEY, JSON.stringify(data.user));
+          navigate("/"); // Navigate to chat page after registration
         }
       } catch (error) {
         toast.error(error.response.data.msg, toastOptions);
-      };
+      }
     }
   };
+  
 
   return (
     <>
