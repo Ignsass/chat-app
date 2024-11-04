@@ -47,8 +47,17 @@ function SingleChat({ fetchAgain, socket, setFetchAgain, selectedChat }) {
                 attachment: attachmentUrl || "",
             }, config);
 
+            // Add avatarColor to the sender data if it's missing
+            data.sender = {
+                ...data.sender,
+                avatarColor: data.sender.avatarColor || user.avatarColor,
+            };
+
+            // Send new message through socket
             socket.current.emit("new message", data);
-            setMessages([...messages, data]);
+
+            // Add the new message to state
+            setMessages((prevMessages) => [...prevMessages, data]);
             setNewAttach(null);
             setLoading(false);
         } catch (error) {
@@ -61,6 +70,7 @@ function SingleChat({ fetchAgain, socket, setFetchAgain, selectedChat }) {
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
             const { data } = await axios.get(`${recieveMessageRoute}/${selectedChat._id}`, config);
+            
             setMessages(data);
             socket.current.emit("join chat", selectedChat._id);
         } catch (error) {
@@ -72,20 +82,32 @@ function SingleChat({ fetchAgain, socket, setFetchAgain, selectedChat }) {
         try {
             const config = { headers: { Authorization: `Bearer ${user.token}` } };
             const { data } = await axios.put(addReactionRoute, { messageId, emoji }, config);
-            // Maintain the current avatarColor by ensuring messages are only updated where necessary
+
             setMessages((prevMessages) =>
-                prevMessages.map((m) => (m._id === messageId ? { ...m, reactions: data.message.reactions } : m))
+                prevMessages.map(m => 
+                    m._id === messageId ? { ...m, reactions: data.message.reactions } : m
+                )
             );
-            setReactionMenu(null);
 
             socket.current.emit("reaction added", data.message);
+            setReactionMenu(null);
         } catch (error) {
             toast.error("Failed to add reaction", toastOptions);
         }
     };
 
     const handleNewMessage = (newMessageReceived) => {
-        setMessages([...messages, newMessageReceived]);
+        if (!newMessageReceived.sender.avatarColor) {
+            newMessageReceived.sender.avatarColor = user.avatarColor;
+        }
+        
+        // Check if the message already exists to prevent duplication
+        setMessages((prevMessages) => {
+            if (prevMessages.some(msg => msg._id === newMessageReceived._id)) {
+                return prevMessages;
+            }
+            return [...prevMessages, newMessageReceived];
+        });
     };
 
     const handleReactionUpdate = (updatedMessage) => {
@@ -98,12 +120,20 @@ function SingleChat({ fetchAgain, socket, setFetchAgain, selectedChat }) {
         fetchMessages();
     }, [selectedChat]);
 
+    // Set up socket listeners only once
     useEffect(() => {
         if (socket.current) {
             socket.current.on("message received", handleNewMessage);
             socket.current.on("reaction received", handleReactionUpdate);
         }
-    }, [messages]);
+
+        return () => {
+            if (socket.current) {
+                socket.current.off("message received", handleNewMessage);
+                socket.current.off("reaction received", handleReactionUpdate);
+            }
+        };
+    }, []);
 
     useEffect(() => {
         scrollRef.current?.scrollIntoView();
@@ -129,6 +159,9 @@ function SingleChat({ fetchAgain, socket, setFetchAgain, selectedChat }) {
                                 />
                                 <div className="content">
                                     <div>{message.content}</div>
+                                    {message.attachment && (
+                                        <img src={message.attachment} alt="attachment" className="attachment-image" />
+                                    )}
                                     <span className="time">
                                         {new Date(message.createdAt).toLocaleTimeString([], {
                                             hour: "2-digit",
@@ -161,7 +194,7 @@ function SingleChat({ fetchAgain, socket, setFetchAgain, selectedChat }) {
                         </div>
                     ))}
                 </div>
-                <ChatInput handleSendMsg={sendMessage}setNewAttach={setNewAttach} newAttach={newAttach} />
+                <ChatInput handleSendMsg={sendMessage} setNewAttach={setNewAttach} newAttach={newAttach} />
             </div>
             <ToastContainer />
         </>

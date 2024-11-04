@@ -13,9 +13,12 @@ import {
     passwordUpdateRoute,
 } from "../utils/APIRoutes";
 import { toastOptions } from "../utils/constants";
+import { io } from "socket.io-client";
+import { host } from "../utils/APIRoutes";
 
 function UpdateProfile({ fetchAgain, setFetchAgain, setModalActive, handleDelete }) {
     const { user, setUser } = ChatState();
+    const socket = useRef(null);
     const modalRef = useRef(null);
 
     const [newUsername, setNewUsername] = useState("");
@@ -31,6 +34,14 @@ function UpdateProfile({ fetchAgain, setFetchAgain, setModalActive, handleDelete
     const [showOld, setShowOld] = useState(false);
     const [show, setShow] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
+
+    useEffect(() => {
+        socket.current = io(host); // Sukurkite socket ryšį
+        socket.current.emit("setup", user); // Sukonfigūruokite vartotojo informaciją
+        return () => {
+            if (socket.current) socket.current.disconnect(); // Atjunkite ryšį, kai komponentas yra sunaikinamas
+        };
+    }, [user]);
 
     useEffect(() => {
         function handleClickOutside(event) {
@@ -62,6 +73,9 @@ function UpdateProfile({ fetchAgain, setFetchAgain, setModalActive, handleDelete
             setUser({ ...data.updatedUser, avatarColor: user.avatarColor });
             handleLocalStorage(data);
             setFetchAgain(!fetchAgain);
+
+            socket.current.emit("usernameUpdated", { userId: user._id, username: newUsername });
+
             toast.success("Your username was changed successfully", toastOptions);
         } catch (error) {
             toast.error(error.message || "Failed to update username", toastOptions);
