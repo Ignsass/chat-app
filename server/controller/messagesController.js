@@ -14,7 +14,7 @@ cloudinary.config({
 export const getMessages = async (req, res, next) => {
   try {
     const messages = await Messages.find({ chat: req.params.chatId })
-      .populate("sender", "username profilePic email")
+      .populate("sender", "username profilePic email avatarColor")
       .populate({
         path: "chat",
         populate: { path: "latestMessage", populate: { path: "sender" } },
@@ -53,10 +53,10 @@ export const addMessage = async (req, res) => {
     );
 
     // Populate and return the message
-    message = await message.populate("sender", "username profilePic");
+    message = await message.populate("sender", "username profilePic avatarColor");
     message = await User.populate(message, {
       path: "chat.users",
-      select: "username profilePic",
+      select: "username profilePic avatarColor",
     });
     message = await message.populate({
       path: "chat",
