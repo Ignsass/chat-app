@@ -163,12 +163,11 @@ function SingleChat({ fetchAgain, socket, setFetchAgain, selectedChat }) {
                                         <img src={message.attachment} alt="attachment" className="attachment-image" />
                                     )}
                                     <span className="time">
-                                        {new Date(message.createdAt).toLocaleTimeString([], {
-                                            hour: "2-digit",
-                                            minute: "2-digit",
-                                            hour12: false,
-                                        })}
-                                    </span>
+    {new Date(message.createdAt).toLocaleDateString() === new Date().toLocaleDateString()
+        ? new Date(message.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
+        : new Date(message.createdAt).toLocaleDateString([], { day: "2-digit", month: "short", year: "numeric" })}
+</span>
+
                                     {message.reactions && (
                                         <div className="reactions">
                                             {message.reactions.map((reaction, index) => (

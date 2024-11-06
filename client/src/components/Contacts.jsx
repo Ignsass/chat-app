@@ -87,9 +87,12 @@ function Contacts({ fetchAgain, selectedChat, socket }) {
                                             {chat.isGroupChat ? chat.chatName : getSender(user, chat.users)}
                                         </h4>
                                         {chat.latestMessage && (
-                                            <span className="time">
-                                                {new Date(chat.latestMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
-                                            </span>
+                                           <span className="time">
+                                           {new Date(chat.latestMessage.createdAt).toLocaleDateString() === new Date().toLocaleDateString()
+                                               ? new Date(chat.latestMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+                                               : new Date(chat.latestMessage.createdAt).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' })}
+                                       </span>
+                                       
                                         )}
                                         {chat.latestMessage && (
                                             <div className="latest-message">
