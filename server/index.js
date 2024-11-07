@@ -109,11 +109,13 @@ mongoose
         }
       });
 
-      socket.on("new message", (newMessageReceived) => {
-        socket
-          .in(newMessageReceived.chatId)
-          .emit("message received", newMessageReceived);
-      });
+      socket.on("new message", (messageData) => {
+        const { chatId } = messageData; // Ensure chatId is available
+        if (chatId) {
+            socket.to(chatId).emit("message received", messageData); // Send to specific chat room
+        }
+    });
+    
 
       socket.on("reaction added", (updatedMessage) => {
         io.to(updatedMessage.chat._id).emit("reaction received", updatedMessage);
