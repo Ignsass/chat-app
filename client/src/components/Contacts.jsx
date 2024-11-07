@@ -47,10 +47,29 @@ function Contacts({ fetchAgain, selectedChat, socket }) {
           )
         );
       });
+
+      socket.current.on("user-deleted", (deletedUserId) => {
+        setChats((prevChats) =>
+          prevChats.filter((chat) => !chat.users.some((u) => u._id === deletedUserId))
+        );
+      });
+
+      socket.current.on("message received", (newMessage) => {
+        setChats((prevChats) => {
+          return prevChats.map((chat) => {
+            if (chat._id === newMessage.chatId) {
+              chat.latestMessage = newMessage; // Update latest message in the chat
+            }
+            return chat;
+          });
+        });
+      });
     }
 
     return () => {
       socket.current.off("user-status-changed");
+      socket.current.off("user-deleted");
+      socket.current.off("message received");
     };
   }, [socket]);
 
@@ -72,12 +91,14 @@ function Contacts({ fetchAgain, selectedChat, socket }) {
                     ) : (
                       <>
                         <UserAvatar
-                          username={user && chat.users ? getSender(user, chat.users) : "Loading..."}
+                          username={getSender(user, chat.users) || "Unknown User"}
                           profilePic={getSenderProfilePic(user, chat.users)}
-                          avatarColor={chat.users.find((u) => u._id !== user._id)?.avatarColor || "#ccc"}
+                          avatarColor={
+                            chat.users.find((u) => u._id !== user._id)?.avatarColor || "#ccc"
+                          }
                         />
                         {chat.users.find((u) => u._id !== user._id)?.isOnline && (
-                          <span className="online-indicator"></span> // Display the green dot
+                          <span className="online-indicator"></span>
                         )}
                       </>
                     )}

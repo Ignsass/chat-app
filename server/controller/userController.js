@@ -292,20 +292,13 @@ export const deleteProfile = async (req, res) => {
   const user = await User.findById(userId);
 
   if (!user) {
-    res.status(404);
-    throw new Error("User Not Found");
-    return;
+    return res.status(404).json({ status: false, message: "User Not Found" });
   }
 
-  if (user.profilePic && user.profilePic !== 'default.svg') {
-    const publicId = user.profilePic.split('/').pop().split('.')[0];
-    await cloudinary.v2.uploader.destroy(`chat_app/profile_pictures/${publicId}`);
-  }
+  // Emit user deletion event
+  req.app.get('socketio').emit("user-deleted", userId); // Notify clients of deletion
 
   await User.findByIdAndDelete(userId);
-
-  // Notify all clients about the deleted user
-  req.app.get('socketio').emit("user-deleted", userId);
-
   res.json({ status: true });
 };
+
