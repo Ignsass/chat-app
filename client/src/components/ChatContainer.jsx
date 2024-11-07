@@ -22,29 +22,29 @@ function ChatContainer({ socket, fetchAgain, setFetchAgain }) {
   const [submText, setSubmText] = useState("");
 
   // Real-time updates for username and profile picture changes
-useEffect(() => {
-  if (socket.current) {
+  useEffect(() => {
+    if (socket.current) {
       socket.current.on("user-updated", (updatedUser) => {
-          setSelectedChat((prevChat) => {
-              if (!prevChat) return prevChat; // If there is no selected chat, do nothing
-              
-              const isUserInChat = prevChat.users.some((u) => u._id === updatedUser._id);
-              if (isUserInChat) {
-                  // Update only the username and profilePic of the user
-                  return {
-                      ...prevChat,
-                      users: prevChat.users.map((u) =>
-                          u._id === updatedUser._id
-                              ? { ...u, username: updatedUser.username, profilePic: updatedUser.profilePic } // Update username and profilePic
-                              : u
-                      ),
-                  };
-              }
-              return prevChat; // Return previous chat if user not in chat
+        setSelectedChat((prevChat) => {
+          if (!prevChat) return prevChat;
+
+          const updatedUsers = prevChat.users.map((u) => {
+            if (u._id === updatedUser._id) {
+              // Only update the user that matches the ID
+              return {
+                ...u,
+                username: updatedUser.username,
+                profilePic: updatedUser.profilePic || u.profilePic, // Update profile picture only if it's available
+              };
+            }
+            return u;
           });
+
+          return { ...prevChat, users: updatedUsers }; // Update the users array
+        });
       });
-  }
-}, [socket, setSelectedChat]);
+    }
+  }, [socket, setSelectedChat]);
 
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -74,7 +74,7 @@ useEffect(() => {
       await axios.put(removeGroupChatRoute, { chatId: selectedChat._id, userId: user._id }, config);
       setFetchAgain(!fetchAgain);
       toast.success(`You successfully left ${selectedChat.chatName}`, toastOptions);
-      setSelectedChat(undefined);
+      setSelectedChat(); // Clear selected chat
       setModalSubmitActive("not");
     } catch (error) {
       toast.error("Something went wrong! Please try again.", toastOptions);
@@ -94,7 +94,7 @@ useEffect(() => {
       await axios.put(deleteChatRoute, { chatId: selectedChat._id }, config);
       setFetchAgain(!fetchAgain);
       toast.success("Chat deleted successfully", toastOptions);
-      setSelectedChat(undefined);
+      setSelectedChat(); // Clear selected chat
       setModalSubmitActive("not");
     } catch (error) {
       toast.error("Something went wrong! Please try again.", toastOptions);
