@@ -21,25 +21,30 @@ function ChatContainer({ socket, fetchAgain, setFetchAgain }) {
   const [warnText, setWarnText] = useState("");
   const [submText, setSubmText] = useState("");
 
-  // Real-time updates for username and avatar color changes
-  useEffect(() => {
-    if (socket.current) {
+  // Real-time updates for username and profile picture changes
+useEffect(() => {
+  if (socket.current) {
       socket.current.on("user-updated", (updatedUser) => {
-        setSelectedChat((prevChat) => {
-          if (!prevChat) return prevChat;
-          const updatedChat = {
-            ...prevChat,
-            users: prevChat.users.map((u) =>
-              u._id === updatedUser._id
-                ? { ...u, username: updatedUser.username } // Only update username
-                : u
-            ),
-          };
-          return updatedChat;
-        });
+          setSelectedChat((prevChat) => {
+              if (!prevChat) return prevChat; // If there is no selected chat, do nothing
+              
+              const isUserInChat = prevChat.users.some((u) => u._id === updatedUser._id);
+              if (isUserInChat) {
+                  // Update only the username and profilePic of the user
+                  return {
+                      ...prevChat,
+                      users: prevChat.users.map((u) =>
+                          u._id === updatedUser._id
+                              ? { ...u, username: updatedUser.username, profilePic: updatedUser.profilePic } // Update username and profilePic
+                              : u
+                      ),
+                  };
+              }
+              return prevChat; // Return previous chat if user not in chat
+          });
       });
-    }
-  }, [socket, setSelectedChat]);
+  }
+}, [socket, setSelectedChat]);
 
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -69,7 +74,7 @@ function ChatContainer({ socket, fetchAgain, setFetchAgain }) {
       await axios.put(removeGroupChatRoute, { chatId: selectedChat._id, userId: user._id }, config);
       setFetchAgain(!fetchAgain);
       toast.success(`You successfully left ${selectedChat.chatName}`, toastOptions);
-      setSelectedChat();
+      setSelectedChat(undefined);
       setModalSubmitActive("not");
     } catch (error) {
       toast.error("Something went wrong! Please try again.", toastOptions);
@@ -89,7 +94,7 @@ function ChatContainer({ socket, fetchAgain, setFetchAgain }) {
       await axios.put(deleteChatRoute, { chatId: selectedChat._id }, config);
       setFetchAgain(!fetchAgain);
       toast.success("Chat deleted successfully", toastOptions);
-      setSelectedChat();
+      setSelectedChat(undefined);
       setModalSubmitActive("not");
     } catch (error) {
       toast.error("Something went wrong! Please try again.", toastOptions);
