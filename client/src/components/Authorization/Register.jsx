@@ -8,12 +8,14 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { registerRoute } from "../../utils/APIRoutes";
 import { toastOptions } from "../../utils/constants";
+import { ChatState } from "../../context/ChatProvider";
 
 function Register({ isLoginActive }) {
   const navigate = useNavigate();
   const [show, setShow] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [isActive, setIsActive] = useState('not-active');
+  const { setUser, resetState } = ChatState();
 
   //creating useState hook and setting empty values into it
   const [values, setValues] = useState({
@@ -82,7 +84,9 @@ function Register({ isLoginActive }) {
           
           // Store new user data and navigate to chat
           localStorage.setItem(process.env.REACT_APP_LOCALHOST_KEY, JSON.stringify(data.user));
-          navigate("/"); // Navigate to chat page after registration
+          setUser(data.user); // Update the user in context
+          resetState(); // Reset chat state
+          navigate("/");
         }
       } catch (error) {
         toast.error(error.response.data.msg, toastOptions);

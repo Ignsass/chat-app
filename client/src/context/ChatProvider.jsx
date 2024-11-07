@@ -17,6 +17,7 @@ const ChatProvider = ({ children }) => {
 
     if (userInfo) {
       setUser(userInfo);
+      setChats([]); // Clear chats when user is set
     } else {
       setUser(null);
       setChats([]);

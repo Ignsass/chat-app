@@ -26,13 +26,17 @@ export const isGroupRecieved = (message, chat, userId) => {
     chat.isGroupChat;
 };
 
-export const getSender = (loggedUser, users) => {
-  return users[0]._id === loggedUser._id ? users[1].username : users[0].username;
+export const getSender = (user, users) => {
+  if (!users || users.length === 0) return "Unknown User"; // Handle empty users array
+  return users.find((u) => u._id !== user._id)?.username || "Unknown User"; // Fallback for undefined
 };
 
-export const getSenderProfilePic = (loggedUser, users) => {
-  return users[0]._id === loggedUser._id ? users[1].profilePic : users[0].profilePic;
+// In ChatLogics.js
+export const getSenderProfilePic = (user, users) => {
+  const sender = users.find((u) => u._id !== user._id); // Get the sender who is not the current user
+  return sender ? sender.profilePic : 'defaultProfilePic.svg'; // Provide a default image if undefined
 };
+
 
 export const getSenderFull = (loggedUser, users) => {
   return users[0]._id === loggedUser._id ? users[1] : users[0];
